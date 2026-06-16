@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Limpiar Firebase — uso único</title>
+<style>
+  body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#faf7f4}
+  .box{background:#fff;border-radius:16px;padding:2rem;max-width:400px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+  h2{margin:0 0 .5rem;font-size:20px}
+  p{color:#666;font-size:14px;margin:0 0 1.5rem}
+  button{padding:12px 28px;background:#c0392b;color:#fff;border:none;border-radius:50px;font-size:15px;cursor:pointer;font-family:inherit}
+  button:disabled{background:#ccc;cursor:not-allowed}
+  .msg{margin-top:1rem;font-size:14px;font-weight:500}
+  .ok{color:#2e7d32}.err{color:#c0392b}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>🗑️ Limpiar productos</h2>
+  <p>Esto borra todos los productos de Firebase y deja la tienda vacía para que los cargues manualmente desde el panel admin.</p>
+  <button id="btn" onclick="limpiar()">Borrar todos los productos</button>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCe2gjGHLGj3C_B1EFuKYDqrRy4FvGdbZ4",
+  authDomain: "ll-intimate.firebaseapp.com",
+  projectId: "ll-intimate",
+  storageBucket: "ll-intimate.firebasestorage.app",
+  messagingSenderId: "505895140232",
+  appId: "1:505895140232:web:02ca6f687b612c01c0583d"
+});
+const db = getFirestore(app);
+
+window.limpiar = async function(){
+  const btn = document.getElementById('btn');
+  const msg = document.getElementById('msg');
+  btn.disabled = true;
+  btn.textContent = 'Borrando...';
+  try {
+    await setDoc(doc(db,'config','products'), { items: [] });
+    msg.className = 'msg ok';
+    msg.textContent = '✓ Firebase limpio. Ya podés cerrar esta página y usar la tienda normalmente.';
+    btn.textContent = 'Listo';
+  } catch(e) {
+    msg.className = 'msg err';
+    msg.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Reintentar';
+  }
+};
+</script>
+</body>
+</html>
