@@ -88,11 +88,11 @@ html,body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--tex
 .overlay{position:fixed;inset:0;background:rgba(61,53,48,0.35);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.25s}
 .overlay.open{opacity:1;pointer-events:all}
 .cart-sidebar{position:fixed;left:0;right:0;bottom:0;top:0;background:var(--white);z-index:201;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column}
+.cart-sidebar.open{transform:translateY(0)}
 @media(min-width:640px){
   .cart-sidebar{left:auto;width:400px;transform:translateX(100%);top:0;border-left:1px solid var(--sand);}
   .cart-sidebar.open{transform:translateX(0);}
 }
-.cart-sidebar.open{transform:translateY(0)}
 .cart-header{padding:1rem 1.25rem;border-bottom:1px solid var(--sand);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .cart-title{font-family:'Playfair Display',serif;font-size:20px}
 .close-btn{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:6px;font-size:20px;display:flex;align-items:center}
@@ -207,7 +207,9 @@ html,body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--tex
 .detail-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 1.25rem 1rem}
 .detail-footer{padding:1rem 1.25rem;border-top:1px solid var(--sand);flex-shrink:0;padding-bottom:calc(1rem + env(safe-area-inset-bottom))}
 .detail-img-wrap{width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--rose-light);margin-bottom:1rem;display:flex;align-items:center;justify-content:center}
-.detail-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.detail-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;touch-action:none;user-select:none;-webkit-user-select:none;transform-origin:center center;transition:transform 0.15s ease;will-change:transform}
+.detail-img-wrap.zoomed{overflow:visible;z-index:1;border-radius:14px}
+.detail-img-wrap.zoomed img{border-radius:14px;box-shadow:0 8px 32px rgba(61,53,48,0.18)}
 .detail-emoji{font-size:80px;line-height:1}
 .detail-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:var(--charcoal);margin-bottom:0.5rem;line-height:1.3}
 .detail-desc{font-size:14px;color:var(--charcoal-light);line-height:1.65;margin-bottom:1rem;white-space:normal}
