@@ -58,7 +58,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--tex
   .products-section{padding:1.5rem 2rem;}
   .hero{padding:3rem 2rem 2.5rem;}
   .hero h1{font-size:36px;}
-  .filters-bar{flex-direction:row;align-items:center;padding:0.875rem 2rem;}
+  .filters-bar{flex-direction:row;align-items:center;padding:0.875rem 2rem;padding-right:calc(2rem + 160px);}
   .filters-bar .filters-row:first-child{flex:none;}
 }
 
@@ -622,12 +622,14 @@ function buildFilters(){
     colEl.appendChild(b);
   });
 }
+const DIACRITICS_RE=new RegExp('['+String.fromCharCode(0x300)+'-'+String.fromCharCode(0x36f)+']','g');
+function normalizeText(s){return(s||'').toLowerCase().normalize('NFD').replace(DIACRITICS_RE,'');}
 function getFiltered(){
-  const q=searchQuery.trim().toLowerCase();
+  const q=normalizeText(searchQuery.trim());
   return products.filter(p=>{
     const catOk=activeCategory==='all'||p.cat===activeCategory;
     const colorOk=activeColors.length===0||activeColors.some(c=>(p.colors||[]).includes(c));
-    const nameOk=!q||p.name.toLowerCase().includes(q);
+    const nameOk=!q||normalizeText(p.name).includes(q);
     return catOk&&colorOk&&nameOk;
   });
 }
@@ -831,6 +833,31 @@ function closeProductDetail(){
 function closeDetailOutside(e){if(e.target===document.getElementById('product-detail-overlay'))closeProductDetail();}
 
 // ── CART ──────────────────────────────────────────────────
+const CART_KEY='ll_cart';
+function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart));}catch(e){}}
+function loadCartRaw(){try{const r=localStorage.getItem(CART_KEY);const a=r?JSON.parse(r):[];return Array.isArray(a)?a:[];}catch(e){return[];}}
+// Limpia el carrito guardado contra los productos actuales (productos borrados,
+// sin stock, packs que ya no existen) y refresca precios/datos.
+function reconcileCart(loaded){
+  if(!Array.isArray(loaded))return[];
+  if(!products.length)return loaded; // sin lista confiable (error de red o tienda vacía): no podar
+  const result=[];
+  loaded.forEach(ci=>{
+    const prod=products.find(p=>p.id===ci.id);
+    if(!prod||prod.status==='inactive')return; // borrado o sin stock → fuera
+    const qty=Math.max(1,parseInt(ci.qty,10)||1);
+    if(ci.packQty){
+      if(!hasPacks(prod))return;
+      const pk=prod.packOptions.find(o=>o.qty===ci.packQty);
+      if(!pk)return; // ese pack ya no se vende → fuera
+      result.push({...prod,qty,cartKey:getCartKey(prod.id,pk.qty),packQty:pk.qty,unitPrice:pk.price,price:pk.price});
+    }else{
+      if(hasPacks(prod))return; // ahora sólo se vende por pack → la línea por unidad ya no aplica
+      result.push({...prod,qty,cartKey:getCartKey(prod.id,null),price:prod.price});
+    }
+  });
+  return result;
+}
 function addToCart(id,packOption=null){
   const prod=products.find(p=>p.id===id);
   if(!prod||prod.status==='inactive')return;
@@ -850,6 +877,7 @@ function addToCart(id,packOption=null){
   const cb=document.querySelector('.cart-btn');if(cb&&!cb.classList.contains('bounce')){cb.classList.add('bounce');cb.addEventListener('animationend',()=>cb.classList.remove('bounce'),{once:true});}
 }
 function updateCartUI(){
+  saveCart();
   const total=cart.reduce((s,i)=>s+getItemLinePrice(i)*i.qty,0);
   document.getElementById('cart-count').textContent=cart.reduce((s,i)=>s+i.qty,0);
   document.getElementById('cart-total').textContent='$'+fmt(total);
@@ -1085,6 +1113,7 @@ async function initApp(){
     console.warn('Error cargando número WA:',e);
     waNumber='5491160532417';
   }
+  cart=reconcileCart(loadCartRaw());
   initUploaderEvents();buildFilters();renderGrid();updateCartUI();
   appReadyResolve();
 }
